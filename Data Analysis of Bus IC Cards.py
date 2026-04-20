@@ -108,15 +108,46 @@ plt.savefig('route_stops.png', dpi=300)
 plt.close()
 
 
+# --------------------------
+# 任务4：高峰小时系数PHF计算
+# --------------------------
+# 只统计上车数据
+df_board = df[df['刷卡类型'] == 0].copy()
+
+# 1. 按小时统计，找到刷卡量最大的高峰小时
+hourly_count = df_board['hour'].value_counts().sort_index()
+peak_hour = hourly_count.idxmax()  # 高峰小时
+peak_volume = hourly_count.max()   # 高峰小时总流量
+
+# 2. 筛选出高峰小时内的所有数据
+df_peak = df_board[df_board['hour'] == peak_hour].copy()
+df_peak['交易时间'] = pd.to_datetime(df_peak['交易时间'])
+
+# 3. 5分钟粒度统计 → 最大5分钟流量
+df_peak['time_5min'] = df_peak['交易时间'].dt.floor('5min')
+max_5min = df_peak['time_5min'].value_counts().max()
+
+# 4. 15分钟粒度统计 → 最大15分钟流量
+df_peak['time_15min'] = df_peak['交易时间'].dt.floor('15min')
+max_15min = df_peak['time_15min'].value_counts().max()
+
+# 5. 按公式计算 PHF
+PHF5 = peak_volume / (12 * max_5min)
+PHF15 = peak_volume / (4 * max_15min)
+
+
 # ==========================
-# 【任务3检验代码 - 开始】
+# 【任务4检验代码 - 开始】
+# 检验完成可直接删除，不影响后续
 # ==========================
-print("===== 任务3 检验结果 =====")
-print("✅ 函数返回前10行：")
-print(route_result.head(10))
-print("\n✅ 前15条绘图数据：")
-print(top15_routes[['线路号', 'mean_stops', 'std_stops']])
-print("\n✅ 图片已保存：route_stops.png")
+print("===== 任务4 高峰小时系数计算结果 =====")
+print(f"高峰小时：{peak_hour} 时")
+print(f"高峰小时总流量：{peak_volume}")
+print(f"最大5分钟流量：{max_5min}")
+print(f"最大15分钟流量：{max_15min}")
+print("\n===== 计算公式与结果 =====")
+print(f"PHF5 = {peak_volume} / (12 × {max_5min}) = {PHF5:.4f}")
+print(f"PHF15 = {peak_volume} / (4 × {max_15min}) = {PHF15:.4f}")
 # ==========================
-# 【任务3检验代码 - 结束】
+# 【任务4检验代码 - 结束】
 # ==========================

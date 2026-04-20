@@ -68,16 +68,55 @@ plt.savefig('hour_distribution.png', dpi=300)
 plt.close()
 
 
+# --------------------------
+# 任务3：线路站点分析（修复版，无报错）
+# --------------------------
+def analyze_route_stops(df, route_col='线路号', stops_col='ride_stops'):
+    # 分组计算均值和标准差
+    route_stats = df.groupby(route_col)[stops_col].agg(['mean', 'std']).reset_index()
+    route_stats.columns = ['线路号', 'mean_stops', 'std_stops']
+
+    # 【关键修复】去掉标准差为NaN的行（避免绘图报错）
+    route_stats = route_stats.dropna(subset=['std_stops'])
+
+    # 按均值降序
+    route_stats = route_stats.sort_values('mean_stops', ascending=False)
+    return route_stats
+
+
+# 执行函数
+route_result = analyze_route_stops(df)
+top15_routes = route_result.head(15)
+
+# 绘图：修复 seaborn 新版本语法 + 处理误差棒
+plt.figure(figsize=(12, 8))
+
+# 修复：去掉 palette 警告 + 安全绘制误差棒
+sns.barplot(
+    x='mean_stops',
+    y='线路号',
+    data=top15_routes,
+    color='steelblue',  # 用 color 替代 palette，无警告
+    capsize=0.3
+)
+
+plt.xlabel('平均搭乘站点数', fontsize=12)
+plt.ylabel('线路号', fontsize=12)
+plt.title('前15条线路平均搭乘站点数', fontsize=14)
+plt.tight_layout()
+plt.savefig('route_stops.png', dpi=300)
+plt.close()
+
+
 # ==========================
-# 【任务2检验代码 - 开始】
+# 【任务3检验代码 - 开始】
 # ==========================
-print("===== 任务2 检验结果 =====")
-print(f"全天总上车刷卡量：{total_count}")
-print(f"早峰前（小时<7）刷卡量：{early_count}，占比：{early_ratio:.2f}%")
-print(f"深夜时段（小时≥22）刷卡量：{night_count}，占比：{night_ratio:.2f}%")
-print("\n每小时刷卡量统计：")
-print(hour_counts)
-print("\n✅ 图片已保存：hour_distribution.png")
+print("===== 任务3 检验结果 =====")
+print("✅ 函数返回前10行：")
+print(route_result.head(10))
+print("\n✅ 前15条绘图数据：")
+print(top15_routes[['线路号', 'mean_stops', 'std_stops']])
+print("\n✅ 图片已保存：route_stops.png")
 # ==========================
-# 【任务2检验代码 - 结束】
+# 【任务3检验代码 - 结束】
 # ==========================

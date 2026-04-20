@@ -135,19 +135,47 @@ max_15min = df_peak['time_15min'].value_counts().max()
 PHF5 = peak_volume / (12 * max_5min)
 PHF15 = peak_volume / (4 * max_15min)
 
+# --------------------------
+# 任务5：线路驾驶员信息批量导出
+# --------------------------
+import os
+
+# 筛选线路 1101 ~ 1120
+df_selected = df[(df['线路号'] >= 1101) & (df['线路号'] <= 1120)].copy()
+
+# 创建输出文件夹
+output_dir = '线路驾驶员信息'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# 按每条线路循环，去重后保存txt
+for route in sorted(df_selected['线路号'].unique()):
+    # 筛选当前线路
+    df_route = df_selected[df_selected['线路号'] == route]
+
+    # 去重：车辆 → 驾驶员（唯一对应）
+    df_driver = df_route[['车辆编号', '驾驶员编号']].drop_duplicates()
+
+    # 文件名
+    filename = os.path.join(output_dir, f'线路{route}_驾驶员信息.txt')
+
+    # 写入txt
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(f'线路号：{route}\n')
+        f.write('车辆编号\t驾驶员编号\n')
+        for _, row in df_driver.iterrows():
+            f.write(f"{row['车辆编号']}\t{row['驾驶员编号']}\n")
+
 
 # ==========================
-# 【任务4检验代码 - 开始】
-# 检验完成可直接删除，不影响后续
+# 【任务5检验代码 - 开始】
 # ==========================
-print("===== 任务4 高峰小时系数计算结果 =====")
-print(f"高峰小时：{peak_hour} 时")
-print(f"高峰小时总流量：{peak_volume}")
-print(f"最大5分钟流量：{max_5min}")
-print(f"最大15分钟流量：{max_15min}")
-print("\n===== 计算公式与结果 =====")
-print(f"PHF5 = {peak_volume} / (12 × {max_5min}) = {PHF5:.4f}")
-print(f"PHF15 = {peak_volume} / (4 × {max_15min}) = {PHF15:.4f}")
+print("===== 任务5 检验结果 =====")
+print("✅ 已创建文件夹：", output_dir)
+print("✅ 生成的线路文件列表：")
+for route in sorted(df_selected['线路号'].unique()):
+    print(f"线路{route} → 线路{route}_驾驶员信息.txt")
+print("\n✅ 所有1101~1120线路信息已批量导出完成！")
 # ==========================
-# 【任务4检验代码 - 结束】
+# 【任务5检验代码 - 结束】
 # ==========================
